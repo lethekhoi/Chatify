@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -11,6 +13,10 @@ class _LoginPageState extends State<LoginPage> {
 
   GlobalKey<FormState> _formKey;
 
+  String _email;
+  String _password;
+
+  AuthProvider _auth;
   _LoginPageState() {
     _formKey = GlobalKey<FormState>();
   }
@@ -23,27 +29,38 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Theme.of(context).backgroundColor,
       body: Align(
         alignment: Alignment.center,
-        child: _loginPageUI(),
+        child: ChangeNotifierProvider<AuthProvider>.value(
+          value: AuthProvider.instance,
+          child: _loginPageUI(),
+        ),
       ),
     );
   }
 
   Widget _loginPageUI() {
-    return Container(
-      height: _deviceHeight * 0.7,
-      padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.1),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _headingWidget(),
-          _inputForm(),
-          _loginButton(),
-          _registerButton(),
-        ],
-      ),
+    print(_email);
+    print(_password);
+    return Builder(
+      builder: (BuildContext _context) {
+        _auth = Provider.of<AuthProvider>(_context);
+        print(_auth.user);
+        return Container(
+          height: _deviceHeight * 0.7,
+          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.1),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _headingWidget(),
+              _inputForm(),
+              _loginButton(),
+              _registerButton(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -72,10 +89,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _inputForm() {
     return Container(
-      height: _deviceHeight * 0.16,
+      height: _deviceHeight * 0.22,
       child: Form(
         key: _formKey,
-        onChanged: () {},
+        onChanged: () {
+          _formKey.currentState.save();
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,8 +112,16 @@ class _LoginPageState extends State<LoginPage> {
     return TextFormField(
       autocorrect: false,
       style: TextStyle(color: Colors.white),
-      validator: (_input) {},
-      onSaved: (_input) {},
+      validator: (_input) {
+        return _input.length != 0 && _input.contains("@")
+            ? null
+            : "Please enter a valid email";
+      },
+      onSaved: (_input) {
+        setState(() {
+          _email = _input;
+        });
+      },
       cursorColor: Colors.white,
       decoration: InputDecoration(
         hintText: "Email Address",
@@ -110,8 +137,14 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: true,
       autocorrect: false,
       style: TextStyle(color: Colors.white),
-      validator: (_input) {},
-      onSaved: (_input) {},
+      validator: (_input) {
+        return _input.length != 0 ? null : "Please enter a password";
+      },
+      onSaved: (_input) {
+        setState(() {
+          _password = _input;
+        });
+      },
       cursorColor: Colors.white,
       decoration: InputDecoration(
         hintText: "Password",
@@ -123,25 +156,36 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _loginButton() {
-    return Container(
-      height: _deviceHeight * 0.08,
-      width: _deviceWidth,
-      child: MaterialButton(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25.0),
-            side: BorderSide(color: Colors.blue)),
-        onPressed: () {},
-        color: Colors.blue,
-        child: Text(
-          "LOGIN",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
+    return _auth.status == AuthStatus.Authenticating
+        ? Align(
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(),
+          )
+        : Container(
+            height: _deviceHeight * 0.08,
+            width: _deviceWidth,
+            child: MaterialButton(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25.0),
+                  side: BorderSide(color: Colors.blue)),
+              onPressed: () {
+                if (_formKey.currentState.validate()) {
+                  //Login User
+                  print("Valid Suffer");
+                  _auth.loginUserWithEmailandPassWord(_email, _password);
+                }
+              },
+              color: Colors.blue,
+              child: Text(
+                "LOGIN",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          );
   }
 
   Widget _registerButton() {
