@@ -1,5 +1,13 @@
+import 'dart:io';
+import 'package:chatify_app/providers/auth_provider.dart';
 import 'package:chatify_app/services/navigation_service.dart';
 import 'package:flutter/material.dart';
+import '../services/media_service.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+import '../services/db_service.dart';
+import '../services/cloud_storage_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -9,10 +17,22 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   double _deviceHeight;
   double _deviceWidth;
+
   GlobalKey<FormState> _formKey;
+  File _image;
+
+  String _name;
+  String _email;
+  String _password;
+
+  AuthProvider _auth;
+
+  StorageTaskSnapshot _snapshot;
+
   _RegistrationPageState() {
     _formKey = GlobalKey<FormState>();
   }
+
   @override
   Widget build(BuildContext context) {
     _deviceHeight = MediaQuery.of(context).size.height;
@@ -23,27 +43,35 @@ class _RegistrationPageState extends State<RegistrationPage> {
         padding: EdgeInsetsDirectional.fromSTEB(0, _deviceHeight * 0.05, 0, 10),
         child: Container(
           alignment: Alignment.center,
-          child: registrationPageUI(),
+          child: ChangeNotifierProvider<AuthProvider>.value(
+            value: AuthProvider.instance,
+            child: registrationPageUI(),
+          ),
         ),
       ),
     );
   }
 
   Widget registrationPageUI() {
-    return Container(
-      height: _deviceHeight * 0.9,
-      padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.1),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _headingWidget(),
-          _inputForm(),
-          _signinButton(),
-          _backToLoginPage(),
-        ],
-      ),
+    return Builder(
+      builder: (BuildContext _context) {
+        _auth = Provider.of<AuthProvider>(_context);
+        return Container(
+          height: _deviceHeight * 0.9,
+          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.1),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _headingWidget(),
+              _inputForm(),
+              _registerButton(),
+              _backToLoginPage(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -72,10 +100,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Widget _inputForm() {
     return Container(
-      height: _deviceHeight * 0.4,
+      height: _deviceHeight * 0.45,
       child: Form(
         key: _formKey,
-        onChanged: () {},
+        onChanged: () {
+          _formKey.currentState.save();
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.max,
@@ -112,12 +142,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
       autocorrect: false,
       style: TextStyle(color: Colors.white),
       validator: (_input) {
-        return _input.length != 0 && _input.contains("@")
-            ? null
-            : "Please enter your name";
+        return _input.length != 0 ? null : "Please enter your name";
       },
       onSaved: (_input) {
-        setState(() {});
+        setState(() {
+          _name = _input;
+        });
       },
       cursorColor: Colors.white,
       decoration: InputDecoration(
@@ -139,7 +169,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
             : "Please enter a valid email";
       },
       onSaved: (_input) {
-        setState(() {});
+        setState(() {
+          _email = _input;
+        });
       },
       cursorColor: Colors.white,
       decoration: InputDecoration(
@@ -160,7 +192,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
         return _input.length != 0 ? null : "Please enter a password";
       },
       onSaved: (_input) {
-        setState(() {});
+        setState(() {
+          _password = _input;
+        });
       },
       cursorColor: Colors.white,
       decoration: InputDecoration(
@@ -172,43 +206,71 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _signinButton() {
-    return Container(
-      margin: new EdgeInsets.fromLTRB(0, 20, 0, 10),
-      height: _deviceHeight * 0.08,
-      width: _deviceWidth,
-      child: MaterialButton(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25.0),
-            side: BorderSide(color: Colors.blue)),
-        onPressed: () {},
-        color: Colors.blue,
-        child: Text(
-          "Register",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
+  Widget _registerButton() {
+    return _auth.status != AuthStatus.Authenticating
+        ? Container(
+            margin: new EdgeInsets.fromLTRB(0, 20, 0, 10),
+            height: _deviceHeight * 0.08,
+            width: _deviceWidth,
+            child: MaterialButton(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25.0),
+                  side: BorderSide(color: Colors.blue)),
+              onPressed: () async {
+                if (_formKey.currentState.validate() && _image != null) {
+                  //Login User
+                  print("Valid Suffer Register");
+                  _auth.registerUserWithEmailAndPassword(_email, _password,
+                      (String _uid) async {
+                    var result = await CloudStorageService.instance
+                        .uploadUserImage(_uid, _image);
+                    var _imageURL = await result.ref.getDownloadURL();
+                    await DBService.instance
+                        .createUserInDB(_uid, _name, _email, _imageURL);
+                  });
+                }
+              },
+              color: Colors.blue,
+              child: Text(
+                "Register",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          )
+        : Align(
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(),
+          ) ;
   }
 
   Widget _imageSelectorWidget() {
     return Align(
       alignment: Alignment.center,
-      child: Container(
-        alignment: Alignment.center,
-        height: _deviceHeight * 0.1,
-        width: _deviceHeight * 0.1,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(500),
-          image: DecorationImage(
-            fit: BoxFit.cover,
-            image: NetworkImage(
-                "https://cdn0.iconfinder.com/data/icons/occupation-002/64/programmer-programming-occupation-avatar-512.png"),
+      child: GestureDetector(
+        onTap: () async {
+          File _imagefile = await MediaService.instance.getImageFromLibrary();
+          setState(() {
+            _image = _imagefile;
+          });
+        },
+        child: Container(
+          alignment: Alignment.center,
+          height: _deviceHeight * 0.1,
+          width: _deviceHeight * 0.1,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(500),
+            image: DecorationImage(
+              fit: BoxFit.cover,
+              image: _image != null
+                  ? FileImage(_image)
+                  : NetworkImage(
+                      "https://cdn0.iconfinder.com/data/icons/occupation-002/64/programmer-programming-occupation-avatar-512.png"),
+            ),
           ),
         ),
       ),
