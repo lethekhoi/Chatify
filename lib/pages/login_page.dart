@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/snackbar_service.dart';
+import '../services/navigation_service.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -44,8 +45,9 @@ class _LoginPageState extends State<LoginPage> {
     print(_password);
     return Builder(
       builder: (BuildContext _context) {
-        SnackBarService.instance.buildContext = _context;//đăt ở đây vì SnackBar phải nằm trong Scaffold
-                                                      //và lấy context trong build context của Scaffold
+        SnackBarService.instance.buildContext =
+            _context; //đăt ở đây vì SnackBar phải nằm trong Scaffold
+        //và lấy context trong build context của Scaffold
         _auth = Provider.of<AuthProvider>(_context);
         print(_auth.user);
         return Container(
@@ -195,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _registerButton() {
     return GestureDetector(
       onTap: () {
-        print("Hey");
+       NavigationService.instance.navigateTo("register");
       },
       child: Container(
         height: _deviceHeight * 0.08,
