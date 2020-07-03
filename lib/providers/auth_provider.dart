@@ -21,6 +21,21 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _auth = FirebaseAuth.instance;
+    _checkCurrentUserIsAuthenticated();
+  }
+
+  void _autoLogin() {
+    if (user != null) {
+      NavigationService.instance.navigateToReplacement("home");
+    }
+  }
+
+  void _checkCurrentUserIsAuthenticated() async {
+    user = await _auth.currentUser();
+    if (user != null) {
+      notifyListeners();
+      _autoLogin();
+    }
   }
 
   void loginUserWithEmailandPassWord(String _email, String _password) async {
@@ -35,8 +50,10 @@ class AuthProvider extends ChangeNotifier {
       SnackBarService.instance.showSnackBarSuccess("Welcome ${user.email}");
       print("Login In Successfullys");
       //navigation to home page
+      NavigationService.instance.navigateToReplacement("home");
     } catch (e) {
       status = AuthStatus.Error;
+      user = null;
       print("Login Error");
       SnackBarService.instance.showSnackBarError("Error");
       //display an error
@@ -60,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
       //Update last seen time
       NavigationService.instance.goBack();
       //Navigation to HomePage
+      NavigationService.instance.navigateToReplacement("home");
     } catch (e) {
       status = AuthStatus.Error;
       user = null;
