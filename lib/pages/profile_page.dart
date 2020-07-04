@@ -1,22 +1,33 @@
+import 'dart:io';
+
 import 'package:chatify_app/pages/models/contact.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
+import 'package:chatify_app/services/cloud_storage_service.dart';
+import 'package:chatify_app/services/media_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/db_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final double _height;
   final double _width;
-  AuthProvider _auth;
+
   ProfilePage(this._height, this._width);
 
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  AuthProvider _auth;
+  File _imageFile;
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).backgroundColor,
-      height: _height,
-      width: _width,
+      height: widget._height,
+      width: widget._width,
       child: ChangeNotifierProvider<AuthProvider>.value(
         value: AuthProvider.instance,
         child: _profilePageUI(),
@@ -36,13 +47,13 @@ class ProfilePage extends StatelessWidget {
                 ? Align(
                     alignment: Alignment.center,
                     child: SizedBox(
-                      height: _height * 0.50,
+                      height: widget._height * 0.50,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
-                          _userImageWidget(_userData.image),
+                          _userImageWidget(_userData.image, _userData.id),
                           _userNameWidget(_userData.name),
                           _userEmailWidget(_userData.email),
                           _logOutButton(),
@@ -60,19 +71,37 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _userImageWidget(String _image) {
-    double _imageRadius = _height * 0.25;
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 15.0),
-        height: _imageRadius,
-        width: _imageRadius,
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(_imageRadius),
-          image: DecorationImage(
-            image: NetworkImage(_image),
-            fit: BoxFit.fill,
+  Widget _userImageWidget(String _image, String _uid) {
+    double _imageRadius = widget._height * 0.25;
+    return Align(
+      alignment: Alignment.center,
+      child: GestureDetector(
+        onTap: () async {
+          File _imagefile = await MediaService.instance.getImageFromLibrary();
+          print("lll");
+          if (_imagefile != null) {
+            var result = await CloudStorageService.instance
+                .uploadUserImage(_uid, _imagefile);
+            var _imageURL = await result.ref.getDownloadURL();
+            await DBService.instance.updateImage(_uid, _imageURL);
+            setState(() {
+              _imageFile = _imagefile;
+            });
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 15.0),
+          height: _imageRadius,
+          width: _imageRadius,
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(_imageRadius),
+            image: DecorationImage(
+              image: _imageFile != null
+                  ? FileImage(_imageFile)
+                  : NetworkImage(_image),
+              fit: BoxFit.fill,
+            ),
           ),
         ),
       ),
@@ -81,8 +110,8 @@ class ProfilePage extends StatelessWidget {
 
   Widget _userNameWidget(String _userName) {
     return Container(
-      height: _height * 0.05,
-      width: _width,
+      height: widget._height * 0.05,
+      width: widget._width,
       child: Text(
         _userName,
         textAlign: TextAlign.center,
@@ -96,8 +125,8 @@ class ProfilePage extends StatelessWidget {
 
   Widget _userEmailWidget(String _userName) {
     return Container(
-      height: _height * 0.05,
-      width: _width,
+      height: widget._height * 0.05,
+      width: widget._width,
       child: Text(
         _userName,
         textAlign: TextAlign.center,
@@ -111,8 +140,8 @@ class ProfilePage extends StatelessWidget {
 
   Widget _logOutButton() {
     return Container(
-      height: _height * 0.08,
-      width: _width * 0.8,
+      height: widget._height * 0.08,
+      width: widget._width * 0.8,
       child: MaterialButton(
         onPressed: () {
           _auth.logoutUser(() {});
