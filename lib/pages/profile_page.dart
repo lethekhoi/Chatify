@@ -114,7 +114,9 @@ class ProfilePage extends StatelessWidget {
       height: _height * 0.08,
       width: _width * 0.8,
       child: MaterialButton(
-        onPressed: () {},
+        onPressed: () {
+          _auth.logoutUser(() {});
+        },
         child: Text(
           "LOGOUT",
           style: TextStyle(
