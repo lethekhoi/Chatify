@@ -1,3 +1,4 @@
+import 'package:chatify_app/pages/recent_conversations_page.dart';
 import 'package:flutter/material.dart';
 import './profile_page.dart';
 
@@ -13,7 +14,7 @@ class _HomePageState extends State<HomePage>
   TabController _tabController;
 
   _HomePageState() {
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
   }
 
   @override
@@ -54,7 +55,7 @@ class _HomePageState extends State<HomePage>
       controller: _tabController,
       children: <Widget>[
         ProfilePage(_deviceHeight, _deviceWidth),
-        ProfilePage(_deviceHeight, _deviceWidth),
+        RecentConversationsPage(_deviceHeight, _deviceWidth),
         ProfilePage(_deviceHeight, _deviceWidth),
       ],
     );

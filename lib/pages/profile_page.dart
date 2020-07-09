@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:chatify_app/pages/models/contact.dart';
+import 'package:chatify_app/models/contact.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
 import 'package:chatify_app/services/cloud_storage_service.dart';
 import 'package:chatify_app/services/media_service.dart';
@@ -49,7 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: SizedBox(
                       height: widget._height * 0.50,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
@@ -73,34 +73,36 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _userImageWidget(String _image, String _uid) {
     double _imageRadius = widget._height * 0.25;
-    return Align(
-      alignment: Alignment.center,
-      child: GestureDetector(
-        onTap: () async {
-          File _imagefile = await MediaService.instance.getImageFromLibrary();
-          print("lll");
-          if (_imagefile != null) {
-            var result = await CloudStorageService.instance
-                .uploadUserImage(_uid, _imagefile);
-            var _imageURL = await result.ref.getDownloadURL();
-            await DBService.instance.updateImage(_uid, _imageURL);
-            setState(() {
-              _imageFile = _imagefile;
-            });
-          }
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 15.0),
-          height: _imageRadius,
-          width: _imageRadius,
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(_imageRadius),
-            image: DecorationImage(
-              image: _imageFile != null
-                  ? FileImage(_imageFile)
-                  : NetworkImage(_image),
-              fit: BoxFit.fill,
+    return Container(
+      margin: EdgeInsetsDirectional.only(bottom: 10),
+      child: Align(
+        alignment: Alignment.center,
+        child: GestureDetector(
+          onTap: () async {
+            File _imagefile = await MediaService.instance.getImageFromLibrary();
+            if (_imagefile != null) {
+              var result = await CloudStorageService.instance
+                  .uploadUserImage(_uid, _imagefile);
+              var _imageURL = await result.ref.getDownloadURL();
+              await DBService.instance.updateImage(_uid, _imageURL);
+              setState(() {
+                _imageFile = _imagefile;
+              });
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 15.0),
+            height: _imageRadius,
+            width: _imageRadius,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(_imageRadius),
+              image: DecorationImage(
+                image: _imageFile != null
+                    ? FileImage(_imageFile)
+                    : NetworkImage(_image),
+                fit: BoxFit.fill,
+              ),
             ),
           ),
         ),
@@ -117,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
-          fontSize: 30,
+          fontSize: 25,
         ),
       ),
     );
@@ -143,6 +145,9 @@ class _ProfilePageState extends State<ProfilePage> {
       height: widget._height * 0.08,
       width: widget._width * 0.8,
       child: MaterialButton(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25.0),
+            side: BorderSide(color: Colors.red)),
         onPressed: () {
           _auth.logoutUser(() {});
         },
