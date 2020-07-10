@@ -56,5 +56,16 @@ class DBService {
     });
   }
 
-
+  Stream<List<Contact>> getUserInDB(String _searchName) {
+    // 'foo' 'foo' =>'fooz' 'fooa' 'fooq'
+    var _ref = _db
+        .collection(_userCollection)
+        .where("name", isGreaterThanOrEqualTo: _searchName)
+        .where("name", isLessThanOrEqualTo: _searchName + 'z');
+    return _ref.getDocuments().asStream().map((_snapshot) {
+      return _snapshot.documents.map((_doc) {
+        return Contact.fromFirestore(_doc);
+      }).toList();
+    });
+  }
 }
