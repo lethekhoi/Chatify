@@ -101,7 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 image: _imageFile != null
                     ? FileImage(_imageFile)
                     : NetworkImage(_image),
-                fit: BoxFit.fill,
+                fit: BoxFit.cover,
               ),
             ),
           ),

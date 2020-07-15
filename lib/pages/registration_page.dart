@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../services/db_service.dart';
 import '../services/cloud_storage_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../services/snackbar_service.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -55,6 +56,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Widget registrationPageUI() {
     return Builder(
       builder: (BuildContext _context) {
+        SnackBarService.instance.buildContext=_context;
         _auth = Provider.of<AuthProvider>(_context);
         return Container(
           height: _deviceHeight * 0.9,

@@ -37,6 +37,19 @@ class DBService {
     }
   }
 
+  Future<void> updateUserLastSeen(String _uid) async {
+    try {
+      return await _db
+          .collection(_userCollection)
+          .document(_uid)
+          .updateData({"lastSeen": Timestamp.now()}).then((_) {
+        print("update last seen success");
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
   Stream<Contact> getUserData(String _userID) {
     var _ref = _db.collection(_userCollection).document(_userID);
     return _ref.get().asStream().map((_snapshot) {

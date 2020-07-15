@@ -40,7 +40,7 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
           stream: DBService.instance.getUserConversations(_auth.user.uid),
           builder: (_context, _snapshot) {
             var _data = _snapshot.data;
-            return _snapshot.hasData
+            return _data.length != 0
                 ? ListView.builder(
                     itemCount: _data.length,
                     itemBuilder: (_context, _index) {
@@ -86,10 +86,11 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
                           });
                     },
                   )
-                : SpinKitWanderingCubes(
-                    color: Colors.blue,
-                    size: 50.0,
-                  );
+                : Align(
+                    child: Text(
+                    "No coversation yet!",
+                    style: TextStyle(fontSize: 15),
+                  ));
           },
         ),
       );
@@ -103,14 +104,12 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Text(
-          timeago.format(_data.timestamp.toDate()),
+          "Last Message",
           style: TextStyle(fontSize: 12),
         ),
-        Container(
-          height: 10,
-          width: 10,
-          decoration: BoxDecoration(
-              color: Colors.green, borderRadius: BorderRadius.circular(20)),
+        Text(
+          timeago.format(_data.timestamp.toDate()),
+          style: TextStyle(fontSize: 12),
         ),
       ],
     );
