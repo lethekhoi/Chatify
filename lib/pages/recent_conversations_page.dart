@@ -1,7 +1,9 @@
 import 'package:chatify_app/models/contact.dart';
 import 'package:chatify_app/models/conversation.dart';
+import 'package:chatify_app/pages/conversation_page.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
 import 'package:chatify_app/services/db_service.dart';
+import 'package:chatify_app/services/navigation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
@@ -39,8 +41,8 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
         child: StreamBuilder<List<Conversation>>(
           stream: DBService.instance.getUserConversations(_auth.user.uid),
           builder: (_context, _snapshot) {
-            var _data = _snapshot.data;
-            return _data.length != 0
+            var _data = _snapshot.hasData ? _snapshot.data : null;
+            return _data != null
                 ? ListView.builder(
                     itemCount: _data.length,
                     itemBuilder: (_context, _index) {
@@ -58,7 +60,20 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
                                     margin: EdgeInsetsDirectional.only(
                                         top: 5, start: 10, end: 10, bottom: 5),
                                     child: ListTile(
-                                      onTap: () {},
+                                      onTap: () {
+                                        NavigationService.instance
+                                            .navigateToRoute(
+                                          MaterialPageRoute(
+                                            builder: (BuildContext _context) {
+                                              return ConversationPage(
+                                                  _data[_index].conversationID,
+                                                  _data[_index].id,
+                                                  _snapshot1.data.image,
+                                                  _data[_index].name);
+                                            },
+                                          ),
+                                        );
+                                      },
                                       leading: Container(
                                         height: 50,
                                         width: 50,

@@ -81,4 +81,14 @@ class DBService {
       }).toList();
     });
   }
+
+  Stream<ConversationDetail> getConversation(String _conversationID) {
+    var _ref =
+        _db.collection(_conversationCollection).document(_conversationID);
+    return _ref.snapshots().map(
+      (_doc) {
+        return ConversationDetail.fromFirestore(_doc);
+      },
+    );
+  }
 }
