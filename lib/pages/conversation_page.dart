@@ -2,6 +2,7 @@ import 'package:chatify_app/models/conversation.dart';
 import 'package:chatify_app/models/message.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
 import 'package:chatify_app/services/db_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +24,15 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   double _deviceHeight;
   double _deviceWidth;
+
+  GlobalKey<FormState> _formKey;
   AuthProvider _auth;
+  String _messageText;
+  _ConversationPageState() {
+    _formKey = GlobalKey<FormState>();
+    _messageText = "";
+  }
+
   @override
   Widget build(BuildContext context) {
     _deviceHeight = MediaQuery.of(context).size.height;
@@ -226,15 +235,21 @@ class _ConversationPageState extends State<ConversationPage> {
         color: Color.fromRGBO(43, 43, 43, 1),
         borderRadius: BorderRadius.circular(100),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          _messageTextField(),
-          _sendMessageButton(),
-          _imageMessageButton(),
-        ],
+      child: Form(
+        key: _formKey,
+        onChanged: () {
+          _formKey.currentState.save();
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            _messageTextField(),
+            _sendMessageButton(_context),
+            _imageMessageButton(),
+          ],
+        ),
       ),
     );
   }
@@ -244,14 +259,16 @@ class _ConversationPageState extends State<ConversationPage> {
       width: _deviceWidth * 0.6,
       child: TextFormField(
         validator: (_input) {
-          if (_input.length != 0) {
+          if (_input.length == 0) {
             return "Please enter a message";
-          } else {
-            return null;
           }
+          return null;
         },
-        onChanged: (_input) {},
-        onSaved: (_input) {},
+        onSaved: (_input) {
+          setState(() {
+            _messageText = _input;
+          });
+        },
         cursorColor: Colors.white,
         decoration: InputDecoration(
           border: InputBorder.none,
@@ -262,14 +279,28 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
-  Widget _sendMessageButton() {
+  Widget _sendMessageButton(BuildContext _context) {
     return IconButton(
       alignment: Alignment.centerRight,
       icon: new Icon(
         Icons.send,
         color: Colors.white,
       ),
-      onPressed: () {},
+      onPressed: () {
+        if (_formKey.currentState.validate()) {
+         
+          DBService.instance.sendMessage(
+            this.widget._conversationID,
+            Message(
+                message: _messageText,
+                senderID: _auth.user.uid,
+                timestamp: Timestamp.now(),
+                type: MessageType.Text),
+          );
+          _formKey.currentState.reset();
+          FocusScope.of(_context).unfocus();
+        }
+      },
     );
   }
 

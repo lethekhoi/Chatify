@@ -1,5 +1,6 @@
 import 'package:chatify_app/models/contact.dart';
 import 'package:chatify_app/models/conversation.dart';
+import 'package:chatify_app/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DBService {
@@ -90,5 +91,31 @@ class DBService {
         return ConversationDetail.fromFirestore(_doc);
       },
     );
+  }
+
+  Future<void> sendMessage(String _coversationID, Message _message) {
+    var _ref = _db.collection(_conversationCollection).document(_coversationID);
+    var _messageType = "";
+    switch (_message.type) {
+      case MessageType.Text:
+        _messageType = "text";
+        break;
+      case MessageType.Image:
+        _messageType = "image";
+        break;
+      default:
+    }
+    return _ref.updateData({
+      "messages": FieldValue.arrayUnion(
+        [
+          {
+            "message": _message.message,
+            "senderID": _message.senderID,
+            "timestamp": _message.timestamp,
+            "type": _messageType,
+          },
+        ],
+      ),
+    });
   }
 }
