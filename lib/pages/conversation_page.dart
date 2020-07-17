@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:chatify_app/models/conversation.dart';
 import 'package:chatify_app/models/message.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
+import 'package:chatify_app/services/cloud_storage_service.dart';
 import 'package:chatify_app/services/db_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import '../services/media_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ConversationPage extends StatefulWidget {
@@ -110,7 +114,9 @@ class _ConversationPageState extends State<ConversationPage> {
             _isOwnMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: <Widget>[
           !_isOwnMessage ? _userImageWidget() : Container(),
-          _textMessageBubble(_isOwnMessage, _message),
+          _message.type == MessageType.Text
+              ? _textMessageBubble(_isOwnMessage, _message)
+              : _imageMessageBubble(_isOwnMessage, _message),
         ],
       ),
     );
@@ -288,7 +294,6 @@ class _ConversationPageState extends State<ConversationPage> {
       ),
       onPressed: () {
         if (_formKey.currentState.validate()) {
-         
           DBService.instance.sendMessage(
             this.widget._conversationID,
             Message(
@@ -311,7 +316,117 @@ class _ConversationPageState extends State<ConversationPage> {
         Icons.camera_enhance,
         color: Colors.blue,
       ),
-      onPressed: () {},
+      onPressed: () async {
+        var _image = await MediaService.instance.getImageFromLibrary();
+        if (_image != null) {
+          var _result = await CloudStorageService.instance
+              .uploadMediaMessage(_auth.user.uid, _image);
+          var _imageURL = await _result.ref.getDownloadURL();
+          await DBService.instance.sendMessage(
+            this.widget._conversationID,
+            Message(
+                message: _imageURL,
+                senderID: _auth.user.uid,
+                timestamp: Timestamp.now(),
+                type: MessageType.Image),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _imageMessageBubble(bool _isOwnMessage, Message _message) {
+    List<Color> _colorScheme = _isOwnMessage
+        ? [Colors.blue, Color.fromRGBO(42, 117, 188, 1)]
+        : [Color.fromRGBO(69, 69, 69, 1), Color.fromRGBO(43, 43, 43, 1)];
+
+    return _isOwnMessage
+        ? _sendImageMessageLayout(_colorScheme, _message)
+        : _receiveImageMessageLayout(_colorScheme, _message);
+  }
+
+  Widget _sendImageMessageLayout(List<Color> _colorScheme, Message _message) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            gradient: LinearGradient(
+              colors: _colorScheme,
+              stops: [0.30, 0.70],
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Container(
+                height: _deviceHeight * 0.3,
+                width: _deviceWidth * 0.4,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(
+                    image: NetworkImage(_message.message),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Text(
+                timeago.format(_message.timestamp.toDate()),
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _receiveImageMessageLayout(
+      List<Color> _colorScheme, Message _message) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            gradient: LinearGradient(
+              colors: _colorScheme,
+              stops: [0.30, 0.70],
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                height: _deviceHeight * 0.3,
+                width: _deviceWidth * 0.4,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(
+                    image: NetworkImage(_message.message),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Text(
+                timeago.format(_message.timestamp.toDate()),
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

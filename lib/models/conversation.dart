@@ -6,6 +6,7 @@ class Conversation {
   final String conversationID;
   // final String image;
   final String lastMessage;
+  final String lastMessageType;
   final Timestamp timestamp;
   final String name;
   final int unseenCount;
@@ -15,6 +16,7 @@ class Conversation {
       this.conversationID,
       // this.image,
       this.lastMessage,
+      this.lastMessageType,
       this.timestamp,
       this.name,
       this.unseenCount});
@@ -26,6 +28,7 @@ class Conversation {
       conversationID: _data["conversationID"],
       // image: _data["image"],
       lastMessage: _data["lastMessage"] != null ? _data["lastMessage"] : "",
+      lastMessageType: _data["lastMessageType"],
       timestamp: _data["timestamp"],
       name: _data["name"],
       unseenCount: _data["unseenCount"],
