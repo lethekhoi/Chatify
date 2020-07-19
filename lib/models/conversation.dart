@@ -29,7 +29,7 @@ class Conversation {
       // image: _data["image"],
       lastMessage: _data["lastMessage"] != null ? _data["lastMessage"] : "",
       lastMessageType: _data["lastMessageType"],
-      timestamp: _data["timestamp"],
+      timestamp: _data["timestamp"] != null ? _data["timestamp"] : null,
       name: _data["name"],
       unseenCount: _data["unseenCount"],
     );

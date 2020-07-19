@@ -5,6 +5,7 @@ import 'package:chatify_app/providers/auth_provider.dart';
 import 'package:chatify_app/services/cloud_storage_service.dart';
 import 'package:chatify_app/services/media_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/db_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -24,6 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
   File _imageFile;
   @override
   Widget build(BuildContext context) {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     return Container(
       color: Theme.of(context).backgroundColor,
       height: widget._height,

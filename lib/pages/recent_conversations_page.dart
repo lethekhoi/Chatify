@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter/services.dart';
 
 class RecentConversationsPage extends StatefulWidget {
   final double _height;
   final double _width;
+
   RecentConversationsPage(this._height, this._width);
   @override
   _RecentConversationsPageState createState() =>
@@ -21,6 +23,7 @@ class RecentConversationsPage extends StatefulWidget {
 class _RecentConversationsPageState extends State<RecentConversationsPage> {
   @override
   Widget build(BuildContext context) {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     return Container(
       height: widget._height,
       width: widget._width,
@@ -89,7 +92,19 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
                                         ),
                                       ),
                                       title: Text(_data[_index].name),
-                                      subtitle: Text(_data[_index].lastMessage),
+                                      subtitle: _data[_index].lastMessageType ==
+                                              "text"
+                                          ? Text(
+                                              _data[_index].lastMessage.length <
+                                                      15
+                                                  ? _data[_index].lastMessage
+                                                  : _data[_index]
+                                                          .lastMessage
+                                                          .substring(0, 15) +
+                                                      "...",
+                                            )
+                                          : Text(
+                                              "Attachment : ${_data[_index].lastMessageType}"),
                                       trailing:
                                           _listTrailingWidget(_data[_index]),
                                     ),
@@ -123,7 +138,9 @@ class _RecentConversationsPageState extends State<RecentConversationsPage> {
           style: TextStyle(fontSize: 12),
         ),
         Text(
-          timeago.format(_data.timestamp.toDate()),
+          _data.timestamp != null
+              ? timeago.format(_data.timestamp.toDate())
+              : "",
           style: TextStyle(fontSize: 12),
         ),
       ],

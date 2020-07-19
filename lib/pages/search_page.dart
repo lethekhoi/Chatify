@@ -1,5 +1,7 @@
 import 'package:chatify_app/models/contact.dart';
+import 'package:chatify_app/pages/conversation_page.dart';
 import 'package:chatify_app/providers/auth_provider.dart';
+import 'package:chatify_app/services/navigation_service.dart';
 import '../services/db_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -92,6 +94,7 @@ class _SearchPageState extends State<SearchPage> {
                                     Duration(hours: 1),
                                   ),
                                 );
+                        var _recepientID = _userData.id;
                         return Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
@@ -101,7 +104,21 @@ class _SearchPageState extends State<SearchPage> {
                           margin: EdgeInsetsDirectional.only(
                               top: 5, start: 10, end: 10, bottom: 5),
                           child: ListTile(
-                            onTap: () {},
+                            onTap: () {
+                              DBService.instance.createOrGetConversation(
+                                  _auth.user.uid, _recepientID,
+                                  (String _conversationID) {
+                                NavigationService.instance.navigateToRoute(
+                                  MaterialPageRoute(builder: (_context) {
+                                    return ConversationPage(
+                                        _conversationID,
+                                        _recepientID,
+                                        _userData.image,
+                                        _userData.name);
+                                  }),
+                                );
+                              });
+                            },
                             leading: Container(
                               height: 50,
                               width: 50,

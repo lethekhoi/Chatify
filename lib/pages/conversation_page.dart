@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:chatify_app/models/conversation.dart';
@@ -28,13 +29,14 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   double _deviceHeight;
   double _deviceWidth;
-
+  ScrollController _listViewController;
   GlobalKey<FormState> _formKey;
   AuthProvider _auth;
   String _messageText;
   _ConversationPageState() {
     _formKey = GlobalKey<FormState>();
     _messageText = "";
+    _listViewController = new ScrollController();
   }
 
   @override
@@ -84,6 +86,7 @@ class _ConversationPageState extends State<ConversationPage> {
             var _conversationData = _snapshot.data;
             if (_conversationData != null) {
               return ListView.builder(
+                controller: _listViewController,
                 reverse: true,
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                 itemCount: _conversationData.messages.length,
@@ -114,6 +117,7 @@ class _ConversationPageState extends State<ConversationPage> {
             _isOwnMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: <Widget>[
           !_isOwnMessage ? _userImageWidget() : Container(),
+          SizedBox(width: 2),
           _message.type == MessageType.Text
               ? _textMessageBubble(_isOwnMessage, _message)
               : _imageMessageBubble(_isOwnMessage, _message),
@@ -304,6 +308,12 @@ class _ConversationPageState extends State<ConversationPage> {
           );
           _formKey.currentState.reset();
           FocusScope.of(_context).unfocus();
+
+          _listViewController.animateTo(
+            _listViewController.position.minScrollExtent,
+            duration: Duration(milliseconds: 5),
+            curve: Curves.easeInOut,
+          );
         }
       },
     );
@@ -330,6 +340,12 @@ class _ConversationPageState extends State<ConversationPage> {
                 timestamp: Timestamp.now(),
                 type: MessageType.Image),
           );
+
+          _listViewController.animateTo(
+            _listViewController.position.minScrollExtent,
+            duration: Duration(milliseconds: 5),
+            curve: Curves.easeInOut,
+          );
         }
       },
     );
@@ -346,6 +362,8 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Widget _sendImageMessageLayout(List<Color> _colorScheme, Message _message) {
+    DecorationImage _image = DecorationImage(
+        image: NetworkImage(_message.message), fit: BoxFit.cover);
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
@@ -359,7 +377,7 @@ class _ConversationPageState extends State<ConversationPage> {
               end: Alignment.topRight,
             ),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             mainAxisSize: MainAxisSize.max,
@@ -370,10 +388,7 @@ class _ConversationPageState extends State<ConversationPage> {
                 width: _deviceWidth * 0.4,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(
-                    image: NetworkImage(_message.message),
-                    fit: BoxFit.cover,
-                  ),
+                  image: _image,
                 ),
               ),
               Text(

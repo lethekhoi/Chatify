@@ -14,8 +14,18 @@ class _HomePageState extends State<HomePage>
   double _deviceWidth;
   TabController _tabController;
 
-  _HomePageState() {
+  _HomePageState() {}
+
+  @override
+  void initState() {
+   
+    super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        FocusScope.of(context).requestFocus(new FocusNode());
+      }
+    });
   }
 
   @override
